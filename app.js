@@ -1,26 +1,17 @@
 console.log('Hello World!');
 
 let DSP = document.getElementById('displayUnit');
-let resolution = "8";
+let resolution = "8"; // Default resolution
 const widthUnit = getComputedStyle(document.documentElement).getPropertyValue('--displaySize');
 const width = parseInt(widthUnit);
 
-let set64 = document.getElementById('64');
-let set256 = document.getElementById('256');
-let set576 = document.getElementById('576');
-let reset = document.getElementById('Clr');
-
-// set64.addEventListener('click', () => {
-//     removeAllChildren(DSP);
-//     resolution = 8;
-//     drawCells(8);
-// })
-
 let buttons = document.querySelectorAll('.btn');
+
+// Add event listeners to buttons
 buttons.forEach(button => {
     button.addEventListener('click', (event) => {
         const key = event.target.getAttribute('data-btn');
-        if (key==='clr') {
+        if (key === 'clr') {
             removeAllChildren(DSP);
             buttonManager(0);
         } else {
@@ -29,86 +20,93 @@ buttons.forEach(button => {
     });
 });
 
+// Function to remove all children from a parent element
 function removeAllChildren(parent) {
-    while(parent.firstChild) {
+    while (parent.firstChild) {
         parent.removeChild(parent.firstChild);
     }
 }
 
-// resolution = prompt('Input Resolution');
+// Initial drawing of cells
 drawCells(resolution);
 
-function buttonManager (n) {
-    console.log(n);
+// Function to manage button states
+function buttonManager(n) {
     buttons.forEach(button => {
         let id = button.dataset.btn;
-        if (n==id) {
+        if (n == id) {
             button.classList.add('active');
-        }
-
-        else {
+        } else {
             button.classList.remove('active');
         }
     });
 }
 
+// Function to draw cells based on resolution
 function drawCells(resolution) {
     removeAllChildren(DSP);
     const cellDimension = width / resolution;
-    
+
     buttonManager(resolution);
 
-    for(i = 0; i < resolution; i++) {
+    for (let i = 0; i < resolution; i++) {
         let cellRow = document.createElement('div');
-        cellRow.id = 'cellRow';
+        cellRow.style.height = `${cellDimension}px`;
+        DSP.appendChild(cellRow);
 
-        cellRow.style.height = `${cellDimension}rem`;
-        DSP.appendChild(cellRow); 
-    
-        for(j = 0; j < resolution; j++) {
+        for (let j = 0; j < resolution; j++) {
             let cell = document.createElement('div');
-            cell.id = 'cell';
-            cell.classList.add(`cell`);
-
-            cell.style.height = `${cellDimension}rem`;
-            cell.style.width = `${cellDimension}rem`;
-            cellRow.appendChild(cell); 
+            cell.classList.add('cell');
+            cell.style.height = `${cellDimension}px`;
+            cell.style.width = `${cellDimension}px`;
+            cellRow.appendChild(cell);
+            
+            // Initialize painting functionality for each cell
+            initializeCellPainting(cell);
         }
     }
-
-    const cells = document.querySelectorAll('.cell');
-    let isMouseDown = false;
-    
-    document.addEventListener('mousedown', () => {
-        isMouseDown = true;
-    });
-    
-    document.addEventListener('mouseup', () => {
-        isMouseDown = false;
-    });
-    
-    cells.forEach(cell => {
-        cell.style.backgroundColor = 'white';
-        cell.addEventListener('mouseenter', () => {
-            if (isMouseDown) {
-                if (cell.style.backgroundColor === 'white') {
-                    cell.style.backgroundColor = 'red';
-                } else {
-                    cell.style.backgroundColor = 'white';
-                }
-            }
-        });
-    
-        cell.addEventListener('mousedown', () => {
-            if (cell.style.backgroundColor === 'red') {
-                cell.style.backgroundColor = 'white';
-            } else {
-                cell.style.backgroundColor = 'red';
-            }
-        });
-    });
-
 }
 
+// Function to initialize painting functionality for a cell
+function initializeCellPainting(cell) {
+    let isMouseDown = false;
 
+    // Mouse events
+    cell.addEventListener('mousedown', () => toggleCellColor(cell));
+    
+    // Touch events
+    cell.addEventListener('touchstart', (event) => {
+        event.preventDefault(); // Prevent default touch behavior
+        isMouseDown = true;
+        toggleCellColor(cell); // Paint immediately on touch start
+    });
 
+    // Painting while mouse/touch is down
+    cell.addEventListener('mouseenter', () => {
+        if (isMouseDown) toggleCellColor(cell);
+    });
+
+    // Mouse and touch end events to stop painting
+    document.addEventListener('mouseup', () => isMouseDown = false);
+    document.addEventListener('touchend', () => isMouseDown = false);
+
+    // Prevent scrolling while painting on mobile
+    document.addEventListener('touchmove', (event) => {
+        event.preventDefault();
+        if (isMouseDown) toggleCellColor(cell);
+    });
+}
+
+// Function to toggle the color of a cell
+function toggleCellColor(cell) {
+    if (cell.style.backgroundColor === 'white' || !cell.style.backgroundColor) {
+        cell.style.backgroundColor = 'red';
+    } else {
+        cell.style.backgroundColor = 'white';
+    }
+}
+
+// Set initial background color for cells
+document.querySelectorAll('.cell').forEach(cell => {
+    cell.style.backgroundColor = 'white';
+});
